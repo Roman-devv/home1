@@ -1,0 +1,69 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+from scipy.signal import savgol_filter, find_peaks
+
+fig = plt.figure()
+
+# Считываем показания датчика, сохраненные в файл
+pressure = np.loadtxt(r"C:\Users\andre\Downloads\bloodPhysics2.txt")
+time = np.zeros(len(pressure))
+
+# Переводим показания датчика в давление
+pressure = 0.104 * pressure - 12.704
+
+# Частота снятия точек была 10 Гц
+for i in range(len(time)):
+    time[i] = i/10
+
+
+# Выделяем кусок в 15 с
+firstElem = 100
+pressure2 = pressure[firstElem:firstElem+150]
+time1 = time[firstElem:firstElem+150]
+
+# Вычетаем средние значения, чтобы функция колебалась около нуля
+pressure1 = pressure2 - savgol_filter(pressure2, 40, 1)
+
+# Ищем все пики, высота которых больше, чем половина высоты максимального из пиков
+max1 = np.max(pressure1)
+height = 0.1 * max1
+peaks = find_peaks(pressure1, height=height, distance=5)
+print(peaks)
+
+
+# Определяем систолическое (автоматически) и дистолическое (на глаз) давления (номер элемента)
+syst = peaks[0][4] + firstElem
+dist = 500
+
+
+# Строим график давления от времени
+
+ax = plt.axes([0.1, 0.1, 0.8, 0.8])
+
+# Задаём основные и промежуточные деления
+ax.xaxis.set_minor_locator(ticker.MultipleLocator(1, 0.0))
+ax.yaxis.set_minor_locator(ticker.MultipleLocator(5, 0.0))
+
+# Добавляем подписи графику и осям
+ax.set_title("Зависимость давления от времени после нагрузки")
+ax.set_ylabel("Давление, мм рт. ст.")
+ax.set_xlabel("Время, с")
+
+# Создаём сетку
+ax.grid(visible=True, which='minor', linestyle='dashed', linewidth=0.5)
+ax.grid(visible=True, which='major')
+
+
+# Ставим граничные значения осей
+ax.set_xlim(0, np.max(time)+5)
+ax.set_ylim(0, np.max(pressure)+20)
+# Постороение графика давление и определение сист. и диаст. давлений
+ax.plot(time, pressure)
+stringSyst = "Систолическое давление: " + str(round(pressure[syst])) + " мм рт. ст."
+stringDist = "Диастолическое давление: " + str(round((pressure[dist] + pressure[dist+1])/2)) + " мм рт. ст."
+plt.plot(np.linspace(float(time[syst] - 5), float(time[syst] + 5), num=5), np.array([pressure[syst]] * 5), color="red")
+plt.plot(np.linspace(float(time[dist]-5), float(time[dist]+5), num=5), np.array([(pressure[dist])] * 5), color="red")
+plt.text(float(time[syst]), float(pressure[syst]) + 2, stringSyst)
+plt.text(float(time[dist]) - 40, float(pressure[dist]) - 7, stringDist)
+plt.show()
