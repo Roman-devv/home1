@@ -1,0 +1,21 @@
+import bloodFunc as b
+import time
+import matplotlib.pyplot as plt
+
+b.initSpiAdc()
+samples = []
+for i in range(600):
+    samples.append(b.getAdc())
+    time.sleep(0.1)
+with open('bloodNsp2.txt', 'w')as data:
+    for i in range(len(samples)):
+        data.write(str(int(samples[i])) + ' ')
+plt.plot(samples)
+plt.show()
+b.deinitSpiAdc()
+
+# 500 - 40 мм. рт. ст
+# 894 - 80 
+# 1270 - 120
+# 1650 - 160
+# k = 9,7
