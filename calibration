@@ -1,0 +1,25 @@
+import lightFunctions as l
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.signal import savgol_filter, find_peaks
+
+rgb = l.readIntensity('calibration.jpg', "a", "Ртутная лампа", 'Белый лист')
+# Выбираем номер ряда пикселей с эмиссионными линиями
+redMax = np.argmax(rgb[:, 0])
+greenMax = np.argmax(rgb[:, 1])
+# Приводим соотвествующие длины волн
+redline = 690.7
+greenline = 546.1
+# Ищем коээфиценты перевода
+k = (redline - greenline)/(redMax - greenMax)
+a =  -k*redMax + redline
+plt.plot([redMax, greenMax], [redline, greenline], 'o')
+plt.plot(np.array([10, 20, 150]), np.array([10, 20, 150]) * k + a)
+plt.title("Калибровка номера пикселя и длины волны")
+plt.text(100, 600, "y = -3.2*x + 889.9")
+plt.xlabel("Относительный номер пикселя")
+plt.ylabel("Длина волны, нм")
+plt.ylim(400, 800)
+plt.grid()
+plt.show()
+print(k, a)
